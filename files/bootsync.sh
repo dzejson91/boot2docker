@@ -7,6 +7,19 @@ chown docker:docker /var/lib/boot2docker
 # make sure "/var/lib/boot2docker/etc" exists for docker-machine to write into and read "hostname" from it if it exists from a previous boot
 # https://github.com/docker/machine/blob/7a9ce457496353549916e840874012a97e3d2782/libmachine/provision/boot2docker.go#L113
 mkdir -p /var/lib/boot2docker/etc
+
+if [ ! -d /mnt/sda1/data ]; then
+	mkdir /mnt/sda1/data
+	chown docker:staff /mnt/sda1/data
+fi
+
+if [ ! -e /var/lib/boot2docker/etc/hostname ]; then
+	echo "docker" > /var/lib/boot2docker/etc/hostname
+	if [ -d /mnt/sda1 ]; then
+		ln -s /var/lib/boot2docker/etc/hostname /mnt/sda1/hostname
+	fi
+fi
+
 if [ -s /var/lib/boot2docker/etc/hostname ]; then
 	hostname="$(cat /var/lib/boot2docker/etc/hostname)"
 	sethostname "$hostname"
@@ -36,8 +49,20 @@ if [ -d /usr/local/share/ca-certificates/boot2docker ]; then
 	/usr/local/tce.installed/ca-certificates
 fi
 
-if [ -f /var/lib/boot2docker/profile ]; then
+# Install docker compose
+if [ ! -s /usr/local/bin/docker-compose ]; then
+	curl -L --fail "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+    ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+fi
+
+if [ -s /var/lib/boot2docker/profile ]; then
 	. /var/lib/boot2docker/profile
+else
+	touch /var/lib/boot2docker/profile
+	if [ -d /mnt/sda1 ]; then
+		ln -s /var/lib/boot2docker/profile /mnt/sda1/profile
+	fi
 fi
 
 crond -L /var/lib/boot2docker/log/crond.log
@@ -75,14 +100,24 @@ done
 /etc/init.d/haveged conditional
 # (if the system doesn't have enough entropy, "dockerd" hangs without any output until it get a sufficient amount)
 
-if [ -e /var/lib/boot2docker/bootsync.sh ]; then
+if [ -s /var/lib/boot2docker/bootsync.sh ]; then
 	sh /var/lib/boot2docker/bootsync.sh
+else
+	touch /var/lib/boot2docker/bootsync.sh
+	if [ -d /mnt/sda1 ]; then
+		ln -s /var/lib/boot2docker/bootsync.sh /mnt/sda1/bootsync.sh
+	fi
 fi
 
 /etc/init.d/docker start
 
-if [ -e /var/lib/boot2docker/bootlocal.sh ]; then
+if [ -s /var/lib/boot2docker/bootlocal.sh ]; then
 	sh /var/lib/boot2docker/bootlocal.sh &
+else 
+	touch /var/lib/boot2docker/bootlocal.sh
+	if [ -d /mnt/sda1 ]; then
+		ln -s /var/lib/boot2docker/bootlocal.sh /mnt/sda1/bootlocal.sh
+	fi
 fi
 
 /opt/bootlocal.sh &
