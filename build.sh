@@ -1,14 +1,16 @@
 #!/bin/bash
 
+outFile="docker.iso"
+
 docker build -t customb2d .
 
-if [ -e boot2docker.iso ]; then
-	echo "Removing old boot2docker.iso ..."
-	rm boot2docker.iso
+if [ -e $outFile ]; then
+	echo "Removing old $outFile ..."
+	rm $outFile
 fi
 
-echo "Saving boot2docker.iso ..."
+echo "Saving $outFile ..."
 
-docker run --rm customb2d > boot2docker.iso
+docker run --rm customb2d > $outFile
 
 echo "Done"

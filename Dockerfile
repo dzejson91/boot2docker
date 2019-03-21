@@ -530,6 +530,7 @@ RUN savedAptMark="$(apt-mark showmanual)"; \
 	apt-get install -y --no-install-recommends \
 		isolinux \
 		syslinux-common \
+		curl \ 
 	; \
 	rm -rf /var/lib/apt/lists/*; \
 	mkdir -p /tmp/iso/isolinux; \
@@ -551,6 +552,9 @@ COPY files/bootsync.sh ./opt/
 
 # temporary boot debugging aid
 #RUN sed -i '2i set -x' etc/init.d/tc-config
+
+RUN wget -O ./usr/bin/docker-compose "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-Linux-x86_64"
+RUN chmod +x ./usr/bin/docker-compose
 
 COPY files/make-b2d-iso.sh /usr/local/bin/
 RUN time make-b2d-iso.sh; \

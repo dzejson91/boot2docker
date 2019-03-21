@@ -13,11 +13,12 @@ if [ ! -d /mnt/sda1/data ]; then
 	chown docker:staff /mnt/sda1/data
 fi
 
+if [ -d /mnt/sda1/data ]; then
+	echo "cd /mnt/sda1/data" >> /home/docker/.profile
+fi
+
 if [ ! -e /var/lib/boot2docker/etc/hostname ]; then
 	echo "docker" > /var/lib/boot2docker/etc/hostname
-	if [ -d /mnt/sda1 ]; then
-		ln -s /var/lib/boot2docker/etc/hostname /mnt/sda1/hostname
-	fi
 fi
 
 if [ -s /var/lib/boot2docker/etc/hostname ]; then
@@ -47,22 +48,6 @@ for f in /var/lib/boot2docker/certs/*.pem /var/lib/boot2docker/certs/*.crt; do
 done
 if [ -d /usr/local/share/ca-certificates/boot2docker ]; then
 	/usr/local/tce.installed/ca-certificates
-fi
-
-# Install docker compose
-if [ ! -s /usr/local/bin/docker-compose ]; then
-	curl -L --fail "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
-    ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-fi
-
-if [ -s /var/lib/boot2docker/profile ]; then
-	. /var/lib/boot2docker/profile
-else
-	touch /var/lib/boot2docker/profile
-	if [ -d /mnt/sda1 ]; then
-		ln -s /var/lib/boot2docker/profile /mnt/sda1/profile
-	fi
 fi
 
 crond -L /var/lib/boot2docker/log/crond.log
@@ -102,22 +87,10 @@ done
 
 if [ -s /var/lib/boot2docker/bootsync.sh ]; then
 	sh /var/lib/boot2docker/bootsync.sh
-else
-	touch /var/lib/boot2docker/bootsync.sh
-	if [ -d /mnt/sda1 ]; then
-		ln -s /var/lib/boot2docker/bootsync.sh /mnt/sda1/bootsync.sh
-	fi
 fi
 
 /etc/init.d/docker start
 
 if [ -s /var/lib/boot2docker/bootlocal.sh ]; then
 	sh /var/lib/boot2docker/bootlocal.sh &
-else 
-	touch /var/lib/boot2docker/bootlocal.sh
-	if [ -d /mnt/sda1 ]; then
-		ln -s /var/lib/boot2docker/bootlocal.sh /mnt/sda1/bootlocal.sh
-	fi
 fi
-
-/opt/bootlocal.sh &
